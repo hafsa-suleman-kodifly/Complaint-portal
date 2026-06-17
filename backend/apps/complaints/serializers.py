@@ -33,8 +33,7 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
         model = Complaint
         fields = [
             "id", "reference_number",
-            "complainant_name", "complainant_email", "complainant_phone",
-            "category", "title", "description", "attachments",
+            "complainant_name", "complainant_email", "complainant_phone", "title", "description", "attachments",
         ]
         read_only_fields = ["id", "reference_number"]
 
@@ -56,7 +55,7 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
 class ComplaintListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complaint
-        fields = ["id", "reference_number", "title", "status", "category", "complainant_name", "complainant_email", "created_at", "updated_at"]
+        fields = ["id", "reference_number", "title", "status", "complainant_name", "complainant_email", "created_at", "updated_at"]
 
 class ComplaintDetailSerializer(serializers.ModelSerializer):
     attachments = ComplaintAttachmentSerializer(many=True, read_only=True)
@@ -67,7 +66,7 @@ class ComplaintDetailSerializer(serializers.ModelSerializer):
         model = Complaint
         fields = [
             "id", "reference_number", "complainant_name", "complainant_email",
-            "complainant_phone", "category", "title", "description", "status",
+            "complainant_phone", "title", "description", "status",
             "created_at", "updated_at", "resolved_at", "attachments", "notes", "audit_logs",
         ]
 

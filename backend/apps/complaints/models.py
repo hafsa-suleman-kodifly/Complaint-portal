@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.utils import timezone
 
 class Complaint(models.Model):
     class Status(models.TextChoices):
@@ -8,24 +9,37 @@ class Complaint(models.Model):
         RESOLVED = "resolved", "Resolved"
         CLOSED = "closed", "Closed"
 
-    class Category(models.TextChoices):
-        BILLING = "billing", "Billing"
-        SERVICE = "service", "Service"
-        TECHNICAL = "technical", "Technical"
-        OTHER = "other", "Other"
-
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    reference_number = models.CharField(max_length=20, unique=True)
+    reference_number = models.CharField(
+        max_length=30,
+        unique=True,
+        editable=False
+    )
     complainant_name = models.CharField(max_length=200)
     complainant_email = models.EmailField()
     complainant_phone = models.CharField(max_length=20, blank=True, null=True)
-    category = models.CharField(max_length=50, choices=Category.choices)
     title = models.CharField(max_length=150)
     description = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+
+        if not self.reference_number:
+
+            now = timezone.now()
+
+            self.reference_number = (
+                f"CMP-"
+                f"{now.year}-"
+                f"{now.strftime('%m%d%H%M%S')}"
+            )
+
+        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.reference_number

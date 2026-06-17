@@ -2,6 +2,9 @@ import { Layout, Menu, Typography } from 'antd';
 import { Link, Route, Routes } from 'react-router-dom';
 import SubmitComplaint from './pages/SubmitComplaint';
 import TrackComplaint from './pages/TrackComplaint';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph } = Typography;
@@ -32,14 +35,18 @@ export default function App() {
             { key: 'home', label: <Link to="/">Home</Link> },
             { key: 'new', label: <Link to="/complaints/new">Submit Complaint</Link> },
             { key: 'track', label: <Link to="/complaints/track">Track Complaint</Link> },
+            { key:'login', label:<Link to="/admin/login">Admin Login</Link>}
           ]}
         />
       </Header>
       <Content style={{ padding: '24px 48px' }}>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/complaints/new" element={<SubmitComplaint />} />
+          <Route path="/complaints/new" element={<SubmitComplaint /> } />
           <Route path="/complaints/track" element={<TrackComplaint />} />
+          <Route path="/admin/login" element={<AdminLogin />}/>
+          <Route path="/admin/dashboard" element={<AdminRoute> <AdminDashboard /> </AdminRoute>} />
+
         </Routes>
       </Content>
       <Footer style={{ textAlign: 'center' }}>Complaint Management Portal</Footer>

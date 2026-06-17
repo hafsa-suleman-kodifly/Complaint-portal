@@ -6,6 +6,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.authentication import SessionAuthentication
 
 from .models import Complaint
 from .serializers import (
@@ -18,6 +19,7 @@ from .serializers import (
 from .throttles import ComplaintSubmissionThrottle
 
 class ComplaintCreateAPIView(CreateAPIView):
+    authentication_classes = [] 
     permission_classes = [AllowAny]
     throttle_classes = [ComplaintSubmissionThrottle]
     serializer_class = ComplaintCreateSerializer
@@ -37,6 +39,7 @@ class ComplaintCreateAPIView(CreateAPIView):
         )
 
 class ComplaintTrackAPIView(APIView):
+    authentication_classes = [] 
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -48,13 +51,16 @@ class ComplaintTrackAPIView(APIView):
             "status": complaint.status,
             "created_at": complaint.created_at,
             "updated_at": complaint.updated_at,
-            "resolved_at": complaint.resolved_at,
+            "resolved_at": (
+                complaint.resolved_at.isoformat()
+                if complaint.resolved_at
+                else None )
         })
 
 class AdminComplaintViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
     queryset = Complaint.objects.all().prefetch_related("attachments", "notes", "audit_logs")
-    filterset_fields = ["status", "category"]
+    filterset_fields = ["status"]
     search_fields = ["reference_number", "complainant_name", "complainant_email"]
     ordering_fields = ["created_at", "status"]
     ordering = ["-created_at"]
@@ -74,7 +80,7 @@ class AdminComplaintViewSet(viewsets.ModelViewSet):
             complaint, data=request.data, partial=True, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.update(complaint, serializer.validated_data)
+        serializer.save()
         return Response(ComplaintDetailSerializer(complaint).data)
 
     @action(detail=True, methods=["post"], url_path="notes")

@@ -33,3 +33,5 @@ class LogoutView(APIView):
         except TokenError:
             return Response({"detail": "Invalid token"}, status=400)
         return Response(status=204)
+    
+

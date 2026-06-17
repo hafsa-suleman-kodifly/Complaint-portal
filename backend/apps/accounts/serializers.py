@@ -31,7 +31,7 @@ class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         auth_user = authenticate(
             request=self.context.get("request"),
-            username=email,
+            email=email,
             password=password,
         )
 

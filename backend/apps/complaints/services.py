@@ -29,7 +29,7 @@ def generate_reference_number():
 def create_complaint(validated_data, files=None):
     files = files or []
     complaint = Complaint.objects.create(
-        reference_number=generate_reference_number(),
+        
         **validated_data,
         status=Complaint.Status.OPEN,
     )
