@@ -22,16 +22,37 @@ class RefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [ IsAuthenticated ]
 
     def post(self, request):
         refresh = request.data.get("refresh")
+
         if not refresh:
-            return Response({"detail": "refresh is required"}, status=400)
+            return Response(
+                {
+                    "detail":
+                    "refresh is required"
+                },
+                status=400
+            )
+
         try:
-            RefreshToken(refresh).blacklist()
+
+            token = RefreshToken(refresh)
+            token.blacklist()
+
         except TokenError:
-            return Response({"detail": "Invalid token"}, status=400)
-        return Response(status=204)
+
+            return Response(
+                {
+                    "detail":
+                    "Invalid token"
+                },
+                status=400
+            )
+
+        return Response(
+            status=204
+        )
     
 

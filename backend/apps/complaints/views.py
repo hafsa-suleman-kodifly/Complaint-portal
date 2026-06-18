@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Complaint
 from .serializers import (
@@ -24,6 +25,7 @@ class ComplaintCreateAPIView(CreateAPIView):
     throttle_classes = [ComplaintSubmissionThrottle]
     serializer_class = ComplaintCreateSerializer
     queryset = Complaint.objects.all()
+    parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

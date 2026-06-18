@@ -26,7 +26,8 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
     attachments = serializers.ListField(
         child=serializers.FileField(),
         write_only=True,
-        required=False
+        required=False,
+        validators=[validate_attachments]
     )
 
     class Meta:
@@ -37,20 +38,15 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "reference_number"]
 
+    def create(self, validated_data):
+        files = validated_data.pop("attachments", [])
+        return create_complaint(validated_data, files=files)
+
     def validate_description(self, value):
         if len(value) < 20:
             raise serializers.ValidationError("Description must be at least 20 characters.")
         return value
 
-    def validate(self, attrs):
-        files = self.initial_data.getlist("attachments") if hasattr(self.initial_data, "getlist") else []
-        if files:
-            validate_attachments(files)
-        return attrs
-
-    def create(self, validated_data):
-        files = validated_data.pop("attachments", [])
-        return create_complaint(validated_data, files=files)
 
 class ComplaintListSerializer(serializers.ModelSerializer):
     class Meta:

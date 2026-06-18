@@ -14,32 +14,19 @@ class Complaint(models.Model):
     reference_number = models.CharField(
         max_length=30,
         unique=True,
-        editable=False
+        editable=False,
+        null=False,
+        blank=False
     )
     complainant_name = models.CharField(max_length=200)
-    complainant_email = models.EmailField()
+    complainant_email = models.EmailField(db_index=True)
     complainant_phone = models.CharField(max_length=20, blank=True, null=True)
     title = models.CharField(max_length=150)
     description = models.TextField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
-    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True,db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-
-        if not self.reference_number:
-
-            now = timezone.now()
-
-            self.reference_number = (
-                f"CMP-"
-                f"{now.year}-"
-                f"{now.strftime('%m%d%H%M%S')}"
-            )
-
-        super().save(*args, **kwargs)
-
 
     def __str__(self):
         return self.reference_number
