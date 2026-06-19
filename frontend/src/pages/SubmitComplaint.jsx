@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useState, useRef} from "react";
 import {Button,Card,Form,Input,Typography,message,Result} from "antd";
 import {Upload} from "antd";
 import {UploadOutlined} from "@ant-design/icons";
@@ -12,7 +12,8 @@ export default function SubmitComplaint(){
   const [loading,setLoading]=useState(false);
   const [submitted,setSubmitted]=useState(null);
   const [fileList,setFileList]=useState([]);
-
+  const idempotencyKey = useRef(crypto.randomUUID()).current;
+      
   const onFinish=async(values)=>{
 
     setLoading(true);
@@ -33,13 +34,14 @@ export default function SubmitComplaint(){
               file.originFileObj
           );
       });
-
+      
       const response=await api.post(
         "/complaints/",
         formData,
         {
           headers:{
-            "Content-Type":"multipart/form-data"
+            "Content-Type":"multipart/form-data",
+            "Idempotency-Key": idempotencyKey,
           }
         }
       );
@@ -48,7 +50,7 @@ export default function SubmitComplaint(){
       setSubmitted(response.data);
 
     }catch(error){
-
+        console.log(error.response?.data);
         message.error(
           error.response?.data?.attachments?.[0] ||
           error.response?.data?.detail ||
@@ -113,7 +115,7 @@ export default function SubmitComplaint(){
     </div>
 
 
-    <Card style={{borderRadius:16,boxShadow:"0 4px 20px rgba(27,54,93,.08)"}} bodyStyle={{padding:30}}>
+    <Card style={{borderRadius:16,boxShadow:"0 4px 20px rgba(27,54,93,.08)"}} styles={{padding:30}}>
 
     <Form layout="vertical" onFinish={onFinish}>
 

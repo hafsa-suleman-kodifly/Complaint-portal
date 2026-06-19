@@ -4,52 +4,91 @@ from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
 from .models import Complaint
+from django.template.loader import render_to_string
 
 
-@shared_task
+@shared_task(
+    autoretry_for=(Exception,),
+    retry_kwargs={
+        "max_retries": 5,
+        "countdown": 60,   # first retry after 1 minute
+    },
+    retry_backoff=True,    # exponential backoff
+    retry_backoff_max=600, # max 10 minutes delay
+    retry_jitter=True,     # random delay to avoid spikes
+)
+
 def send_complaint_email(
     email,
     reference_number,
+    complainant_name,
     title,
     description,
 ):
 
+    html_message = render_to_string(
+            "email/complaint_received.html",
+            {
+                "reference_number": reference_number,
+                "title": title,
+                "description": description,
+                "complainant_name": complainant_name,
+            }
+        )
+
+
     send_mail(
-        subject="Complaint Submitted",
+            subject="Complaint Submitted",
 
-        message=f"""
-Your complaint has been received successfully.
+            #fallback
+            message=f"""
+    Your complaint has been received successfully.
 
-Complaint Reference:
-{reference_number}
+    Complaint Reference:
+    {reference_number}
 
-Title:
-{title}
+    Title:
+    {title}
 
-Details:
-{description}
+    Details:
+    {description}
+            """,
 
+            from_email=settings.DEFAULT_FROM_EMAIL,
 
-You can use the reference number above to track your complaint.
+            recipient_list=[
+                email
+            ],
 
-Thank you.
-        """,
-
-        from_email="noreply@civicresolve.com",
-
-        recipient_list=[
-            email
-        ]
-    )
+            html_message=html_message,
+        )
 
 
 
-@shared_task
+@shared_task(
+    autoretry_for=(Exception,),
+    retry_kwargs={
+        "max_retries": 5,
+        "countdown": 60,
+    },
+    retry_backoff=True,
+    retry_backoff_max=600,
+    retry_jitter=True,
+)
 def send_status_email(
     email,
     reference_number,
     status
 ):
+
+    html_message = render_to_string(
+        "email/complaint_status.html",
+        {
+            "reference_number": reference_number,
+            "status": status,
+        }
+    )
+
 
     send_mail(
         subject="Complaint Status Updated",
@@ -66,9 +105,10 @@ New status:
 
         recipient_list=[
             email
-        ]
-    )
+        ],
 
+        html_message=html_message,
+    )
 
 
 @shared_task

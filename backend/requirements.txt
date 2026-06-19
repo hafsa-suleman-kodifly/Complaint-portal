@@ -13,3 +13,4 @@ Pillow
 celery
 redis
 django-celery-beat
+python-decouple==3.8

@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
-
 from .models import Complaint
 from .serializers import (
     ComplaintCreateSerializer,
@@ -61,29 +60,47 @@ class ComplaintTrackAPIView(APIView):
 
 class AdminComplaintViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser]
-    queryset = Complaint.objects.all().prefetch_related("attachments", "notes", "audit_logs")
+    queryset = Complaint.objects.all().prefetch_related("attachments", "notes", "audit_logs__changed_by")
     filterset_fields = ["status"]
     search_fields = ["reference_number", "complainant_name", "complainant_email"]
     ordering_fields = ["created_at", "status"]
     ordering = ["-created_at"]
+    http_method_names = [
+        "get",
+        "patch",
+        "post",
+        "delete",
+    ]
 
     def get_serializer_class(self):
         if self.action == "list":
             return ComplaintListSerializer
         if self.action == "retrieve":
             return ComplaintDetailSerializer
-        if self.action == "partial_update":
+        if self.action == "update_status":
             return ComplaintStatusUpdateSerializer
         return ComplaintDetailSerializer
 
-    def partial_update(self, request, *args, **kwargs):
+    @action(detail=True,methods=["patch"],url_path="status")
+    def update_status(self, request, pk=None):
+
         complaint = self.get_object()
-        serializer = self.get_serializer(
-            complaint, data=request.data, partial=True, context={"request": request}
+
+        serializer = ComplaintStatusUpdateSerializer(
+            complaint,
+            data=request.data,
+            context={
+                "request": request
+            }
         )
+
         serializer.is_valid(raise_exception=True)
+
         serializer.save()
-        return Response(ComplaintDetailSerializer(complaint).data)
+
+        return Response(
+            ComplaintDetailSerializer(complaint).data
+        )
 
     @action(detail=True, methods=["post"], url_path="notes")
     def notes(self, request, pk=None):

@@ -18,6 +18,13 @@ class Complaint(models.Model):
         null=False,
         blank=False
     )
+
+    idempotency_key = models.UUIDField(
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True
+    )
     complainant_name = models.CharField(max_length=200)
     complainant_email = models.EmailField(db_index=True)
     complainant_phone = models.CharField(max_length=20, blank=True, null=True)

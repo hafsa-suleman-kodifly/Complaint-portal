@@ -40,7 +40,12 @@ class ComplaintCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         files = validated_data.pop("attachments", [])
-        return create_complaint(validated_data, files=files)
+        request = self.context["request"]
+
+        idempotency_key = request.headers.get(
+            "Idempotency-Key"
+        )
+        return create_complaint(validated_data, files=files, idempotency_key=idempotency_key)
 
     def validate_description(self, value):
         if len(value) < 20:
@@ -65,12 +70,25 @@ class ComplaintDetailSerializer(serializers.ModelSerializer):
             "complainant_phone", "title", "description", "status",
             "created_at", "updated_at", "resolved_at", "attachments", "notes", "audit_logs",
         ]
+        read_only_fields = [
+            "status",
+            "resolved_at",
+        ]
 
 class ComplaintStatusUpdateSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(choices=Complaint.Status.choices)
+    status = serializers.ChoiceField(
+            choices=Complaint.Status.choices
+        )
 
     def update(self, instance, validated_data):
-        return change_status(instance, validated_data["status"], self.context["request"].user)
+
+        user = self.context["request"].user
+
+        return change_status(
+            instance,
+            validated_data["status"],
+            user
+        )
 
 class ComplaintNoteCreateSerializer(serializers.Serializer):
     note_text = serializers.CharField()

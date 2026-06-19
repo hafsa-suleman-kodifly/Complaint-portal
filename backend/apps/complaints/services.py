@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 from .models import Complaint, ComplaintAttachment, ComplaintNote, AuditLog
 from .tasks import send_status_email, send_complaint_email
-
+from rest_framework.exceptions import ValidationError
 
 ALLOWED_TRANSITIONS = {
     "open": {"in_progress", "resolved", "closed"},
@@ -11,7 +11,6 @@ ALLOWED_TRANSITIONS = {
     "closed": set(),
 }
 
-@transaction.atomic
 def generate_reference_number():
     year = timezone.now().year
     prefix = f"CMP-{year}-"
@@ -19,7 +18,7 @@ def generate_reference_number():
         Complaint.objects
         .select_for_update()
         .filter(reference_number__startswith=prefix)
-        .order_by("-created_at")
+        .order_by("-reference_number")
         .first()
     )
     if not last:
@@ -29,14 +28,18 @@ def generate_reference_number():
     return f"CMP-{year}-{seq:04d}"
 
 @transaction.atomic
-def create_complaint(validated_data, files=None):
+def create_complaint(validated_data, files=None, idempotency_key=None):
 
     files = files or []
-
+    if idempotency_key:
+        existing_complaint = Complaint.objects.filter(idempotency_key=idempotency_key).first()
+        if existing_complaint:
+            return existing_complaint
     validated_data["reference_number"] = generate_reference_number()
 
     complaint = Complaint.objects.create(
         **validated_data,
+        idempotency_key=idempotency_key,
         status=Complaint.Status.OPEN,
     )
 
@@ -58,11 +61,19 @@ def create_complaint(validated_data, files=None):
 
     return complaint
 
+@transaction.atomic
 def change_status(complaint, new_status, user):
+    complaint = (
+        Complaint.objects
+        .select_for_update()
+        .get(id=complaint.id)
+    )
     old_status = complaint.status
 
     if new_status not in ALLOWED_TRANSITIONS.get(old_status, set()):
-        raise ValueError("Invalid status transition")
+        raise ValidationError(
+            f"Cannot change status from {old_status} to {new_status}"
+        )
 
     complaint.status = new_status
     

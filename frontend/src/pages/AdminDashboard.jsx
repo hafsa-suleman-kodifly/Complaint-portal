@@ -33,7 +33,7 @@ export default function AdminDashboard(){
 
     try{
 
-      await api.patch(`/admin/complaints/${id}/`,{status});
+      await api.patch(`/admin/complaints/${id}/status/`,{status});
       message.success("Status updated");
       fetchComplaints();
 

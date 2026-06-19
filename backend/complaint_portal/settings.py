@@ -16,6 +16,8 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 from decouple import config
+from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -209,3 +211,17 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
+
+CELERY_BEAT_SCHEDULE = {
+
+    "clear-old-complaints-every-5-hours": {
+        "task": "apps.complaints.tasks.clear_old_complaints",
+        "schedule": crontab(hour="*/5"),
+    },
+
+}
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "idempotency-key",
+]
