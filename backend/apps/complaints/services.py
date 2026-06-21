@@ -3,6 +3,8 @@ from django.utils import timezone
 from .models import Complaint, ComplaintAttachment, ComplaintNote, AuditLog
 from .tasks import send_status_email, send_complaint_email
 from rest_framework.exceptions import ValidationError
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 ALLOWED_TRANSITIONS = {
     "open": {"in_progress", "resolved", "closed"},
@@ -85,6 +87,31 @@ def change_status(complaint, new_status, user):
         changed_by=user,
         old_status=old_status,
         new_status=new_status,
+    )
+
+    channel_layer = get_channel_layer()
+
+    transaction.on_commit(
+        lambda: async_to_sync(
+            channel_layer.group_send
+        )(
+            "admin_notifications",
+            {
+                "type": "send_notification",
+                "data": {
+                    "type": "STATUS_CHANGED",
+                    "message":
+                        f"Complaint {complaint.reference_number} status changed",
+                    "complaint_id": str(complaint.id),
+                    "reference_number":
+                        complaint.reference_number,
+                    "old_status": old_status,
+                    "new_status": complaint.status,
+                    "changed_by":
+                        getattr(user, "username", str(user)),
+                }
+            }
+        )
     )
 
     transaction.on_commit(

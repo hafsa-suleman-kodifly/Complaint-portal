@@ -64,6 +64,8 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.complaints",
     "apps.core",
+
+     "channels",
 ]
 
 MIDDLEWARE = [
@@ -225,3 +227,13 @@ CORS_ALLOW_HEADERS = [
     *default_headers,
     "idempotency-key",
 ]
+
+ASGI_APPLICATION = "config.asgi.application"
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND":
+        "channels.layers.InMemoryChannelLayer"
+    }
+}

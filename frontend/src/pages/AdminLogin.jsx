@@ -1,109 +1,122 @@
-import {Form,Input,Button,Card,Typography,Alert,Space,Divider,Layout} from "antd";
-import {MailOutlined,LockOutlined,BankOutlined,ArrowRightOutlined,InfoCircleOutlined} from "@ant-design/icons";
-import {useState} from "react";
-import api from "../services/api";
-import useAuthStore from "../store/authStore";
+import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Typography,
+  Alert,
+  Space,
+  Divider,
+  Layout,
+} from "antd"
+import {
+  MailOutlined,
+  LockOutlined,
+  ArrowRightOutlined,
+  InfoCircleOutlined,
+  SafetyCertificateFilled,
+  HomeOutlined,
+} from "@ant-design/icons"
+import api from "../services/api.js"
+import useAuthStore from "../store/authStore.js"
 
-const {Title,Text}=Typography;
-const {Content}=Layout;
+const { Title, Text } = Typography
+const { Content } = Layout
 
-export default function AdminLogin(){
+export default function AdminLogin() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const navigate = useNavigate()
+  const login = useAuthStore((s) => s.login)
 
-  const [loading,setLoading]=useState(false);
-  const [error,setError]=useState("");
-
-  const login=useAuthStore(state=>state.login);
-
-  const onFinish=async(values)=>{
-
-    setLoading(true);
-    setError("");
-
-    try{
-
-      const res=await api.post("/auth/login/",{
-        email:values.email,
-        password:values.password
-      });
-
-      login(res.data);
-      window.location.href="/admin/dashboard";
-
-    }catch(err){
-
-      setError(err.response?.data?.detail || "Invalid credentials");
-
-    }finally{
-      setLoading(false);
+  const onFinish = async (values) => {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await api.post("/auth/login/", {
+        email: values.email,
+        password: values.password,
+      })
+      login(res.data)
+      navigate("/admin/dashboard")
+    } catch (err) {
+      setError(err.response?.data?.detail || "Invalid credentials")
+    } finally {
+      setLoading(false)
     }
-  };
-
+  }
 
   return (
-
-    <Layout style={{minHeight:"100vh",background:"radial-gradient(circle at top right,#e5eeff,#f8f9ff)"}}>
-
-      <Content>
-
-        <Space direction="vertical" align="center" style={{width:"100%",minHeight:"100vh",justifyContent:"center",padding:24}}>
-
-
-          <Space direction="vertical" align="center" size={2}>
-
-            <Space size={10} align="center">
-
-              <BankOutlined style={{fontSize:40,color:"#002046"}}/>
-
-              <Title level={2} style={{margin:0,color:"#002046"}}>
-                CivicResolve
-              </Title>
-
-            </Space>
-
-            <Text type="secondary">
-              Administrative Secure Access
-            </Text>
-
+    <Layout style={{ minHeight: "100vh" }}>
+      <Content
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "32px 16px",
+          background:
+            "radial-gradient(1200px 600px at 50% -10%, #1677ff22, transparent), linear-gradient(180deg,#f4f7fc,#eaf1ff)",
+        }}
+      >
+        <Space direction="vertical" align="center" size={20} style={{ width: "100%", maxWidth: 440 }}>
+          <Space direction="vertical" align="center" size={10}>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: "linear-gradient(135deg,#1677ff,#0a3d8f)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontSize: 28,
+                boxShadow: "0 10px 26px rgba(22,119,255,0.4)",
+              }}
+            >
+              <SafetyCertificateFilled />
+            </div>
+            <Title level={3} style={{ margin: 0 }}>
+              Administrator Access
+            </Title>
+            <Text type="secondary">Secure portal for authorized personnel</Text>
           </Space>
 
-
-          <Card style={{width:"100%",maxWidth:440,borderRadius:16,boxShadow:"0 4px 20px rgba(27,54,93,.08)"}} bodyStyle={{padding:30}}>
-
-
-            <Title level={3}>Sign In</Title>
-
+          <Card style={{ width: "100%" }}>
+            <Title level={5} style={{ marginTop: 0 }}>
+              Sign in to your account
+            </Title>
             <Text type="secondary">
               Access the portal with your official administrator credentials.
             </Text>
 
+            {error && (
+              <Alert type="error" message={error} showIcon style={{ margin: "16px 0" }} />
+            )}
 
-            {error && <Alert style={{marginTop:20}} message={error} type="error"/>}
-
-
-            <Form layout="vertical" onFinish={onFinish} style={{marginTop:25}}>
-
-
+            <Form layout="vertical" onFinish={onFinish} style={{ marginTop: 16 }}>
               <Form.Item
-                label="Official Email"
+                label="Email"
                 name="email"
-                rules={[{required:true,message:"Enter email"},{type:"email",message:"Invalid email"}]}
+                rules={[
+                  { required: true, message: "Enter email" },
+                  { type: "email", message: "Enter a valid email" },
+                ]}
               >
-
-                <Input size="large" prefix={<MailOutlined/>} placeholder="name@civicresolve.gov"/>
-
+                <Input size="large" prefix={<MailOutlined />} placeholder="name@civicresolve.gov" />
               </Form.Item>
-
 
               <Form.Item
                 label="Password"
                 name="password"
-                rules={[{required:true,message:"Enter password"}]}
+                rules={[{ required: true, message: "Enter password" }]}
               >
-
-                <Input.Password size="large" prefix={<LockOutlined/>} placeholder="Password"/>
-
+                <Input.Password size="large" prefix={<LockOutlined />} placeholder="Password" />
               </Form.Item>
-
 
               <Button
                 type="primary"
@@ -111,55 +124,32 @@ export default function AdminLogin(){
                 block
                 size="large"
                 loading={loading}
-                icon={<ArrowRightOutlined/>}
-                style={{background:"#002046",borderColor:"#002046",borderRadius:10}}
+                iconPosition="end"
+                icon={<ArrowRightOutlined />}
               >
                 Sign In
               </Button>
-
-
             </Form>
 
+            <Divider style={{ margin: "20px 0" }} />
 
-            <Divider/>
-
-
-            <Space align="start">
-
-              <InfoCircleOutlined style={{fontSize:20,color:"#49607b"}}/>
-
+            <Space align="start" size={10}>
+              <InfoCircleOutlined style={{ fontSize: 18, color: "#1677ff" }} />
               <Text type="secondary">
-                This system is for authorized personnel only.
+                This system is for authorized personnel only. All activity is monitored.
               </Text>
-
             </Space>
-
-
           </Card>
 
+          <Link to="/" style={{ color: "#0a3d8f", fontWeight: 600 }}>
+            <HomeOutlined /> Back to public portal
+          </Link>
 
-          <Space style={{marginTop:20}}>
-
-            <Text type="secondary">Portal Support</Text>
-            <Text>|</Text>
-            <Text type="secondary">Privacy Policy</Text>
-            <Text>|</Text>
-            <Text type="secondary">Terms of Use</Text>
-
-          </Space>
-
-
-          <Text type="secondary" style={{marginTop:30}}>
+          <Text type="secondary" style={{ fontSize: 12, textAlign: "center" }}>
             © 2024 CivicResolve Complaint Portal. All rights reserved.
           </Text>
-
-
         </Space>
-
       </Content>
-
     </Layout>
-
-  );
-
+  )
 }

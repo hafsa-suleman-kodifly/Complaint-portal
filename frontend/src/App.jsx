@@ -6,8 +6,9 @@ import TrackComplaint from "./pages/TrackComplaint";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminRoute from "./components/AdminRoute";
-import TopNavbar from "./components/TopNavbar";
-
+import Navbar from "./components/Navbar";
+import AppFooter from "./components/AppFooter";                         
+import NotificationProvider from "./components/NotificationCenter";
 
 const {
   Content,
@@ -53,89 +54,28 @@ function Home(){
 }
 
 
-
-export default function App(){
-
-
+export default function App() {
   return (
-
-    <Layout
-      style={{
-        minHeight:"100vh"
-      }}
-    >
-
-
-      {/* SINGLE GLOBAL NAVBAR */}
-
-      <TopNavbar />
-
-
-
-      <Content
-        style={{
-          padding:"24px 48px"
-        }}
-      >
-
-        <Routes>
-
-
-          <Route
-            path="/"
-            element={<Home />}
-          />
-
-
-          <Route
-            path="/complaints/new"
-            element={<SubmitComplaint />}
-          />
-
-
-          <Route
-            path="/complaints/track"
-            element={<TrackComplaint />}
-          />
-
-
-          <Route
-            path="/admin/login"
-            element={<AdminLogin />}
-          />
-
-
-          <Route
-            path="/admin/dashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          />
-
-
-        </Routes>
-
-
-      </Content>
-
-
-
-      <Footer
-        style={{
-          textAlign:"center"
-        }}
-      >
-
-        Complaint Management Portal
-
-      </Footer>
-
-
-
-    </Layout>
-
+    <NotificationProvider>
+      <Layout style={{ minHeight: "100vh" }}>
+        <Navbar />
+        <Content>
+          <Routes>
+            <Route path="/" element={<SubmitComplaint />} />
+            <Route path="/track" element={<TrackComplaint />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+          </Routes>
+        </Content>
+        <AppFooter />
+      </Layout>
+    </NotificationProvider>
   );
-
 }
