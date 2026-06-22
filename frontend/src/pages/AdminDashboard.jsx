@@ -64,88 +64,57 @@ export default function AdminDashboard() {
 
   useEffect(() => {
 
-      fetchComplaints()
+  fetchComplaints()
+
+  const WS_BASE = import.meta.env.VITE_WS_BASE_URL
+
+  const socket = new WebSocket(
+    `${WS_BASE}/ws/admin/notifications/`
+  )
+
+  socket.onopen = () => {
+    console.log("Admin websocket connected")
+  }
 
 
-      const WS_BASE = import.meta.env.VITE_WS_BASE_URL
+  socket.onmessage = (event) => {
+
+    console.log("RAW MESSAGE:", event.data)
+
+    const data = JSON.parse(event.data)
+
+    console.log("WebSocket notification:", data)
+
+    message.info(
+      data.message || "Complaint updated"
+    )
+
+    fetchComplaints()
+  }
 
 
-      const socket = new WebSocket(
-        `${WS_BASE}/ws/admin/notifications/`
-      )
+  socket.onerror = (error) => {
+    console.log("WebSocket error", error)
+  }
 
 
-      socket.onopen = () => {
-        console.log("Admin websocket connected")
-      }
+  socket.onclose = (event) => {
+    console.log(
+      "Admin websocket disconnected",
+      event.code,
+      event.reason
+    )
+  }
 
 
-      socket.onmessage = (event) => {
-
-        const data = JSON.parse(event.data)
-
-        console.log(
-          "WebSocket notification:",
-          data
-        )
+  return () => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.close()
+    }
+  }
 
 
-        // popup notification
-        message.info(
-          data.message ||
-          "Complaint updated"
-        )
-
-
-        // update current table instantly
-        if(data.reference_number){
-
-          setComplaints(prev =>
-            prev.map(c =>
-              c.reference_number === data.reference_number
-                ? {
-                    ...c,
-                    status:
-                      data.new_status ||
-                      data.status ||
-                      c.status,
-                    updated_at:
-                      new Date().toISOString()
-                  }
-                : c
-            )
-          )
-
-        }
-
-
-        // refresh latest backend data
-        fetchComplaints()
-
-      }
-
-
-      socket.onerror = (error) => {
-        console.log(
-          "WebSocket error",
-          error
-        )
-      }
-
-
-      socket.onclose = () => {
-        console.log(
-          "Admin websocket disconnected"
-        )
-      }
-
-
-      return () => {
-        socket.close()
-      }
-
-
-    }, [])
+}, [])
   const updateStatus = async (id, status) => {
     try {
       setUpdatingId(id)
