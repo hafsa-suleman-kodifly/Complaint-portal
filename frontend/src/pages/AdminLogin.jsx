@@ -35,6 +35,7 @@ export default function AdminLogin() {
     setLoading(true)
     setError("")
     try {
+      console.log(import.meta.env.VITE_API_BASE_URL);
       const res = await api.post("/auth/login/", {
         email: values.email,
         password: values.password,

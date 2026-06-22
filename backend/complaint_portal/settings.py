@@ -35,11 +35,17 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ub3itp8x-!=v^#&&(xes8f#3mi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".ngrok-free.dev",
+    ".ngrok.app",
+]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://many-monotype-ascend.ngrok-free.dev",
 ]
 
 
@@ -228,12 +234,19 @@ CORS_ALLOW_HEADERS = [
     "idempotency-key",
 ]
 
-ASGI_APPLICATION = "config.asgi.application"
+CORS_ALLOW_ALL_ORIGINS = True
+
+
+ASGI_APPLICATION = "complaint_portal.asgi.application"
 
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND":
-        "channels.layers.InMemoryChannelLayer"
-    }
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                ("localhost", 6379)
+            ],
+        },
+    },
 }
