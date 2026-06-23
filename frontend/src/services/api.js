@@ -4,6 +4,10 @@ console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
 
 const api = axios.create({
     baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
+    headers: {
+        // This stops ngrok from showing the intercept screen to your frontend
+        "ngrok-skip-browser-warning": "true", 
+    }
 });
 
 api.interceptors.request.use(
