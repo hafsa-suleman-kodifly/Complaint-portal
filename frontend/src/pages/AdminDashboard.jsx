@@ -55,9 +55,14 @@ export default function AdminDashboard() {
       setLoading(true)
       const res = await api.get("/admin/complaints/")
       setComplaints(res.data.results || res.data)
-    } catch {
-      message.error("Failed loading complaints")
-    } finally {
+      } catch (err) {
+        console.error("LOAD COMPLAINTS ERROR:", err)
+        console.error("RESPONSE:", err.response?.data)
+
+        message.error(
+          err.response?.data?.detail || "Failed loading complaints"
+        )
+      }finally {
       setLoading(false)
     }
   }

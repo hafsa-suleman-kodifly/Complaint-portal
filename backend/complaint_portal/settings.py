@@ -42,11 +42,30 @@ ALLOWED_HOSTS = [
     ".ngrok.app",
     "many-monotype-ascend.ngrok-free.dev",
 ]
+MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOWED_ORIGINS = [
+    "https://complaint-portal-7423-njvks3eqm-hafsasuleman-6301s-projects.vercel.app",
+]
 
+CORS_ALLOW_ALL_ORIGINS = True
 
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "idempotency-key",
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -73,19 +92,13 @@ INSTALLED_APPS = [
      "channels",
 ]
 
-MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
-
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 
 ROOT_URLCONF = 'complaint_portal.urls'
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://complaint-portal-7423-njvks3eqm-hafsasuleman-6301s-projects.vercel.app",
+    "https://many-monotype-ascend.ngrok-free.dev",
+]
 
 TEMPLATES = [
     {
@@ -233,7 +246,6 @@ CORS_ALLOW_HEADERS = [
     "idempotency-key",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
 
 
 ASGI_APPLICATION = "complaint_portal.asgi.application"
