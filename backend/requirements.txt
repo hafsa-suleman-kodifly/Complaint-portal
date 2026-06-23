@@ -10,3 +10,7 @@ sqlparse==0.5.5
 typing_extensions==4.15.0
 django-filter
 Pillow
+celery
+redis
+django-celery-beat
+python-decouple==3.8

@@ -32,9 +32,8 @@ pnpm-debug.log*
 # VS Code
 .vscode/
 
-# macOS
-.DS_Store
-
 # Editor backups
 *~
 *.swp
+
+media/

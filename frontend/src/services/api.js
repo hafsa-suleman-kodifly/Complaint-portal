@@ -1,10 +1,14 @@
 import axios from "axios";
 
+console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
+    headers: {
+        // This stops ngrok from showing the intercept screen to your frontend
+        "ngrok-skip-browser-warning": "true", 
+    }
 });
-
 
 api.interceptors.request.use(
 (config)=>{
@@ -24,5 +28,17 @@ api.interceptors.request.use(
 (error) => Promise.reject(error)
 );
 
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access");
+      if (!window.location.pathname.includes("/admin/login")) {
+        window.location.href = "/admin/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

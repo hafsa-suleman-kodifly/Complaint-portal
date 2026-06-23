@@ -1,247 +1,230 @@
-import { useState } from "react";
-import { Button, Card, Form, Input, Typography, message, Result } from "antd";
-import api from "../services/api";
+import { useState } from "react"
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  Typography,
+  Result,
+  Row,
+  Col,
+  Descriptions,
+  Timeline,
+  App as AntApp,
+} from "antd"
+import {
+  SearchOutlined,
+  MailOutlined,
+  NumberOutlined,
+  FrownOutlined,
+  CalendarOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons"
+import api from "../services/api.js"
+import PageHero from "../components/PageHero.jsx"
+import StatusTag from "../components/StatusTag.jsx"
+import { getStatus } from "../utils/status.jsx"
 
-const { Title } = Typography;
+const { Title, Text } = Typography
+
+function fmt(d) {
+  return d ? new Date(d).toLocaleString() : "N/A"
+}
 
 export default function TrackComplaint() {
+  const { message } = AntApp.useApp()
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+  const [complaint, setComplaint] = useState(null)
+  const [notFound, setNotFound] = useState(false)
 
-  const [loading, setLoading] = useState(false);
-  const [complaint, setComplaint] = useState(null);
-  const [notFound, setNotFound] = useState(false);
-
-
-  const onFinish = async (values) => {
-
-    setLoading(true);
-
-    // reset previous state
-    setComplaint(null);
-    setNotFound(false);
-
+  const onFinish = async (v) => {
+    setLoading(true)
+    setComplaint(null)
+    setNotFound(false)
     try {
-
-      const response = await api.get(
-        "/complaints/track/",
-        {
-          params: {
-            ref: values.reference_number,
-            email: values.email
-          }
-        }
-      );
-
-
-      setComplaint(response.data);
-
-      message.success("Complaint found");
-
-
-    } catch (error) {
-
-      if (error.response?.status === 404) {
-
-        setNotFound(true);
-        message.error("Complaint not found");
-
+      const r = await api.get("/complaints/track/", {
+        params: { ref: v.reference_number, email: v.email },
+      })
+      setComplaint(r.data)
+      message.success("Complaint found")
+    } catch (e) {
+      if (e.response?.status === 404) {
+        setNotFound(true)
+        message.error("Complaint not found")
       } else {
-
-        message.error("Something went wrong");
-
+        message.error("Something went wrong")
       }
-
     } finally {
-
-      setLoading(false);
-
+      setLoading(false)
     }
-
-  };
-
-
-  if (complaint) {
-
-    return (
-      <Card style={{ maxWidth:480, margin:"0 auto" }}>
-
-        <Result
-          status="success"
-          title="Complaint Found"
-          subTitle={
-            <>
-              Reference:
-              <br />
-              <b>{complaint.reference_number}</b>
-
-              <br />
-
-              Status:
-              <br />
-              <b>{complaint.status}</b>
-
-              <br />
-
-              Created:
-              <br />
-              <b>
-                {
-                  complaint.created_at
-                    ? new Date(
-                        complaint.created_at
-                      ).toLocaleString()
-                    : "N/A"
-                }
-              </b>
-
-              <br />
-
-              Updated:
-              <br />
-              <b>
-                {
-                  complaint.updated_at
-                    ? new Date(
-                        complaint.updated_at
-                      ).toLocaleString()
-                    : "N/A"
-                }
-              </b>
-
-              {
-                complaint.resolved_at && (
-                  <>
-                    <br />
-
-                    Resolved:
-                    <br />
-
-                    <b>
-                      {new Date(
-                        complaint.resolved_at
-                      ).toLocaleString()}
-                    </b>
-                  </>
-                )
-              }
-
-            </>
-          }
-
-          extra={
-            <Button
-              type="primary"
-              onClick={()=>{
-                setComplaint(null);
-              }}
-            >
-              Track Another
-            </Button>
-          }
-
-        />
-
-      </Card>
-    );
   }
 
-
-  if (notFound) {
-
-    return (
-      <Card style={{ maxWidth:480, margin:"0 auto" }}>
-
-        <Result
-          status="error"
-          title="Complaint Not Found"
-          subTitle="Check your reference number and email"
-
-          extra={
-            <Button
-              type="primary"
-              onClick={()=>{
-                setNotFound(false);
-              }}
-            >
-              Try Again
-            </Button>
-          }
-
-        />
-
-      </Card>
-    );
+  const reset = () => {
+    setComplaint(null)
+    setNotFound(false)
+    form.resetFields()
   }
 
+  const buildTimeline = (c) => {
+    const items = [
+      {
+        color: "#1677ff",
+        children: (
+          <>
+            <Text strong>Complaint submitted</Text>
+            <div style={{ color: "#7b8aa3", fontSize: 12 }}>{fmt(c.created_at)}</div>
+          </>
+        ),
+      },
+      {
+        color: getStatus(c.status).hex,
+        children: (
+          <>
+            <Text strong>Last updated · {getStatus(c.status).label}</Text>
+            <div style={{ color: "#7b8aa3", fontSize: 12 }}>{fmt(c.updated_at)}</div>
+          </>
+        ),
+      },
+    ]
+    if (c.resolved_at) {
+      items.push({
+        color: "#389e0d",
+        children: (
+          <>
+            <Text strong>Resolved</Text>
+            <div style={{ color: "#7b8aa3", fontSize: 12 }}>{fmt(c.resolved_at)}</div>
+          </>
+        ),
+      })
+    }
+    return items
+  }
 
   return (
+    <div>
+      <PageHero
+        eyebrow="Real-time Tracking"
+        icon={<SearchOutlined />}
+        title="Track Your Complaint"
+        subtitle="Enter your reference number and email to view the latest status and updates."
+      />
 
-    <Card
-      style={{
-        maxWidth:480,
-        margin:"0 auto"
-      }}
-    >
+      <div style={{ maxWidth: 760, margin: "-64px auto 56px", padding: "0 16px" }}>
+        <Card>
+          <Form form={form} layout="vertical" onFinish={onFinish}>
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Reference Number"
+                  name="reference_number"
+                  rules={[{ required: true, message: "Enter your reference number" }]}
+                >
+                  <Input size="large" prefix={<NumberOutlined />} placeholder="CR-2024-1000" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label="Email Address"
+                  name="email"
+                  rules={[
+                    { required: true, message: "Enter your email" },
+                    { type: "email", message: "Enter a valid email" },
+                  ]}
+                >
+                  <Input size="large" prefix={<MailOutlined />} placeholder="name@example.com" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              block
+              size="large"
+              icon={<SearchOutlined />}
+            >
+              Track Progress
+            </Button>
+          </Form>
+        </Card>
 
-      <Title level={3}>
-        Track Your Complaint
-      </Title>
+        {complaint && (
+          <Card style={{ marginTop: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <div>
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  Reference
+                </Text>
+                <Title level={4} style={{ margin: 0 }}>
+                  {complaint.reference_number}
+                </Title>
+              </div>
+              <StatusTag status={complaint.status} />
+            </div>
 
+            <Descriptions
+              column={{ xs: 1, sm: 2 }}
+              size="middle"
+              items={[
+                { key: "title", label: "Title", children: complaint.title },
+                { key: "cat", label: "Category", children: complaint.category || "General" },
+                {
+                  key: "created",
+                  label: (
+                    <span>
+                      <CalendarOutlined /> Created
+                    </span>
+                  ),
+                  children: fmt(complaint.created_at),
+                },
+                {
+                  key: "updated",
+                  label: (
+                    <span>
+                      <CalendarOutlined /> Updated
+                    </span>
+                  ),
+                  children: fmt(complaint.updated_at),
+                },
+              ]}
+            />
 
-      <Form
-        layout="vertical"
-        onFinish={onFinish}
-      >
+            <Title level={5} style={{ marginTop: 24 }}>
+              Progress timeline
+            </Title>
+            <Timeline items={buildTimeline(complaint)} style={{ marginTop: 12 }} />
 
+            <Button icon={<ReloadOutlined />} onClick={reset}>
+              Track another complaint
+            </Button>
+          </Card>
+        )}
 
-        <Form.Item
-          label="Reference Number"
-          name="reference_number"
-          rules={[
-            {
-              required:true,
-              message:"Enter reference number"
-            }
-          ]}
-        >
-
-          <Input placeholder="CMP-2026-0001"/>
-
-        </Form.Item>
-
-
-
-        <Form.Item
-          label="Email"
-          name="email"
-          rules={[
-            {
-              required:true,
-              type:"email",
-              message:"Enter valid email"
-            }
-          ]}
-        >
-
-          <Input placeholder="you@example.com"/>
-
-        </Form.Item>
-
-
-
-        <Button
-          type="primary"
-          htmlType="submit"
-          loading={loading}
-          block
-        >
-          Track
-        </Button>
-
-
-      </Form>
-
-
-    </Card>
-
-  );
+        {notFound && (
+          <Card style={{ marginTop: 24 }}>
+            <Result
+              icon={<FrownOutlined style={{ color: "#1677ff" }} />}
+              title="Complaint not found"
+              subTitle="We couldn't find a complaint matching that reference number and email. Please check your details and try again."
+              extra={
+                <Button type="primary" onClick={() => setNotFound(false)}>
+                  Try Again
+                </Button>
+              }
+            />
+          </Card>
+        )}
+      </div>
+    </div>
+  )
 }

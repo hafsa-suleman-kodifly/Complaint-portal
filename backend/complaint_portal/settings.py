@@ -15,6 +15,9 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from decouple import config
+from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,13 +35,13 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ub3itp8x-!=v^#&&(xes8f#3mi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    ".ngrok-free.dev",
+    ".ngrok.app",
+    "many-monotype-ascend.ngrok-free.dev",
 ]
-
 
 # Application definition
 
@@ -55,12 +58,15 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
+    "django_extensions",
     "corsheaders",
 
     # local
     "apps.accounts",
     "apps.complaints",
     "apps.core",
+
+     "channels",
 ]
 
 MIDDLEWARE = [
@@ -75,7 +81,23 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "idempotency-key",
+    "ngrok-skip-browser-warning",
+]
+
+
+
 ROOT_URLCONF = 'complaint_portal.urls'
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://complaint-portal-7423-njvks3eqm-hafsasuleman-6301s-projects.vercel.app",
+    "https://many-monotype-ascend.ngrok-free.dev",
+]
 
 TEMPLATES = [
     {
@@ -93,7 +115,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'complaint_portal.wsgi.application'
-
+ASGI_APPLICATION = "complaint_portal.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -102,11 +124,11 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "complaint_db",
-        "USER": "postgres",
-        "PASSWORD": "hafsa123",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
     }
 }
 
@@ -189,3 +211,43 @@ SIMPLE_JWT = {
 # Media files (user uploaded)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT", cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool)
+
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
+
+CELERY_BEAT_SCHEDULE = {
+
+    "clear-old-complaints-every-5-hours": {
+        "task": "apps.complaints.tasks.clear_old_complaints",
+        "schedule": crontab(hour="*/5"),
+    },
+
+}
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                ("localhost", 6379)
+            ],
+        },
+    },
+}
